@@ -12,6 +12,7 @@ public class UDPserver {
                 aSocket.receive(request);
                 DatagramPacket reply = new DatagramPacket(request.getData(), request.getLength(), request.getAddress(), request.getPort());
                 aSocket.send(reply);
+                System.out.println("Recieved: " + new String(reply.getData()));
             }
         } catch (SocketException e) {
             System.out.println("Socket: " + e.getMessage());

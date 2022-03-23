@@ -7,7 +7,8 @@ public class client {
     private static final String HELO = "HELO\n";
     private static final String AUTH = "AUTH TEXT\n";
     private static final String REDY = "REDY\n";
-    private static final String TERM = "QUIT\n";
+    private static final String GETSALL = "GETS All\n";
+    private static final String OK = "OK\n";
     public static void main(String[] args) throws IOException {
         try {
             Socket sock = new Socket(HOST, PORT);
@@ -20,8 +21,21 @@ public class client {
             System.out.println(dis.readLine());
             writeflush(dos, REDY);
             System.out.println(dis.readLine());
-            writeflush(dos, TERM);
-            System.out.println(dis.readLine());
+            writeflush(dos, GETSALL);
+            String Data = dis.readLine();
+            int serverCount = Integer.parseInt(Data.split(" ")[1]);
+            System.out.println(Data);
+            writeflush(dos, OK);
+            Server[] servers = new Server[serverCount];
+            for (int i = 0; i < serverCount; i++) {
+                String serverData = dis.readLine();
+                System.out.println(serverData);
+                servers[i] = new Server(serverData.split(" "));
+            }
+
+            for (Server server : servers) {
+                System.out.println(server.serverName);
+            }
             
             sock.close();
         } catch (UnknownHostException e) {

@@ -2,7 +2,10 @@ public class Server {
     String serverType;
     int serverID;
     String state;
-    int curStartTime, core, memory, disk;
+    int curStartTime;
+    int core;
+    int memory;
+    int disk;
 
     String serverName;
 

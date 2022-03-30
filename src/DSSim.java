@@ -1,4 +1,6 @@
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DSSim {
     public static final String HELO = "HELO\n";
@@ -26,26 +28,26 @@ public class DSSim {
         return String.format("GETS Avail %d %d %d", core, memory, disk);
     }
     public static String SCHD(Job job, Server server) {
-        return String.format("SCHD %d %s %d", job.jobID, server.serverType, server.serverID);
+        return String.format("SCHD %d %s %d", job.getJobID(), server.getServerType(), server.getServerID());
     }
     public static String CNTJ(Server server, String jobState) {
-        return String.format("CNTJ %s %d %s", server.serverType, server.serverID, jobState);
+        return String.format("CNTJ %s %d %s", server.getServerType(), server.getServerID(), jobState);
     }
     public static String EJWT(Server server) {
-        return String.format("EJWT %s %d", server.serverType, server.serverID);
+        return String.format("EJWT %s %d", server.getServerType(), server.getServerID());
     }
     public static String LSTJ(Server server) {
-        return String.format("LSTJ %s %d", server.serverType, server.serverID);
+        return String.format("LSTJ %s %d", server.getServerType(), server.getServerID());
     }
     public static final String PSHJ = "PSHJ\n";
     public static String MIGJ(Job job, Server src, Server dst) {
-        return String.format("MIGJ %d %s %s %s %s", job.jobID, src.serverType, src.serverID, dst.serverType, dst.serverID);
+        return String.format("MIGJ %d %s %s %s %s", job.getJobID(), src.getServerType(), src.getServerID(), dst.getServerType(), dst.getServerID());
     }
     public static String KILJ(Server server, Job job) {
-        return String.format("KILJ %s %d %d", server.serverType, server.serverID, job.jobID);
+        return String.format("KILJ %s %d %d", server.getServerType(), server.getServerID(), job.getJobID());
     }
     public static String TERM(Server server) {
-        return String.format("TERM %s %d", server.serverType, server.serverID);
+        return String.format("TERM %s %d", server.getServerType(), server.getServerID());
     }
 
     /*
@@ -81,5 +83,26 @@ public class DSSim {
     public void writeDiscard(String s) throws IOException {
         write(s);
         read();
+    }
+
+    public String[] readData() throws IOException {
+        String dataInfo = read();
+        int dataFragmentCount = Integer.parseInt(dataInfo.split(" ")[1]);
+        write(DSSim.OK);
+        String[] dataFragments = new String[dataFragmentCount];
+        for (int i = 0; i < dataFragmentCount; i++) {
+            dataFragments[i] = read();
+        }
+        return dataFragments;
+    }
+
+    public List<Server> getServers() throws IOException {
+        write(DSSim.GETSALL);
+        String[] serverStrings = readData();
+        List<Server> servers = new ArrayList<Server>();
+        for (int i = 0; i < serverStrings.length; i++) {
+            servers.add(new Server(serverStrings[i].split(" ")));
+        }
+        return servers;
     }
 }

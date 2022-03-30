@@ -1,10 +1,10 @@
 public class Job {
-    int submitTime;
-    int jobID;
-    int estRunTime;
-    int core;
-    int memory;
-    int disk;
+    private int submitTime;
+    private int jobID;
+    private int estRunTime;
+    private int core;
+    private int memory;
+    private int disk;
 
     public Job(String[] args) {
         this(args[0], args[1], args[2], args[3], args[4], args[5]);
@@ -21,5 +21,29 @@ public class Job {
         core = _core;
         memory = _memory;
         disk = _disk;    
+    }
+
+    public int getSubmitTime() {
+        return submitTime;
+    }
+
+    public int getJobID() {
+        return jobID;
+    }
+
+    public int getEstRunTime() {
+        return estRunTime;
+    }
+
+    public int getCore() {
+        return core;
+    }
+
+    public int getMemory() {
+        return memory;
+    }
+
+    public int getDisk() {
+        return disk;
     }
 }

@@ -1,4 +1,5 @@
 import java.net.*;
+import java.util.*;
 import java.io.*;
 
 public class client {
@@ -13,20 +14,15 @@ public class client {
             sim.writePrint(DSSim.HELO);
             sim.writePrint(DSSim.AUTH);
             sim.writePrint(DSSim.REDY);
-            String data = sim.writeRead(DSSim.GETSALL);
-            int serverCount = Integer.parseInt(data.split(" ")[1]);
-            System.out.println(data);
-            sim.writePrint(DSSim.OK);
-            Server[] servers = new Server[serverCount];
-            for (int i = 0; i < serverCount; i++) {
-                String serverData = sim.read();
-                System.out.println(serverData);
-                servers[i] = new Server(serverData.split(" "));
+            List<Server> servers = sim.getServers();
+            Collections.sort(servers, new ServerComparator());
+            Server best = servers.get(0);
+            servers.removeIf(s -> (s.compareTo(best) < 0));
+            Iterator<Server> serverCycler = new ServerCycler(servers);
+            while(serverCycler.hasNext()) {
+                System.out.println(serverCycler.next().serverName);
             }
-
-            for (Server server : servers) {
-                System.out.println(server.serverName);
-            }
+            
             
             sock.close();
         } catch (UnknownHostException e) {

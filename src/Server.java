@@ -1,11 +1,11 @@
-public class Server {
-    String serverType;
-    int serverID;
-    String state;
-    int curStartTime;
-    int core;
-    int memory;
-    int disk;
+public class Server implements Comparable<Server>{
+    private String serverType;
+    private int serverID;
+    private String state;
+    private int curStartTime;
+    private int core;
+    private int memory;
+    private int disk;
 
     String serverName;
 
@@ -28,6 +28,33 @@ public class Server {
         disk = _disk;
 
         serverName = String.format("%s %d", serverType, serverID);
+    }
+
+    public String getServerType() {
+        return serverType;
+    }
+    public int getServerID() {
+        return serverID;
+    }
+    public String getState() {
+        return state;
+    }
+    public int getCurStartTime() {
+        return curStartTime;
+    }
+    public int getCore() {
+        return core;
+    }
+    public int getMemory() {
+        return memory;
+    }
+    public int getDisk() {
+        return disk;
+    }
+
+    @Override
+    public int compareTo(Server o) {
+        return Integer.compare(this.getCore(), o.getCore());
     }
 }
 

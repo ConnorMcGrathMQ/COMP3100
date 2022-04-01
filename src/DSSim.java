@@ -1,7 +1,8 @@
 public final class DSSim {
 
     /*
-    Client Commands
+    Client Commands as raw Strings or functions for params.
+    Also uses Job and Server objects as params
     */
     public static final String HELO = "HELO\n";
     public static final String OK = "OK\n";
@@ -47,14 +48,14 @@ public final class DSSim {
     /*
     Server Responses
     */
-    public static final String DATA = "DATA";
-    public static final String JOBN = "JOBN";
-    public static final String JOBP = "JOBP";
-    public static final String JCPL = "JCPL";
-    public static final String RESF = "RESF";
-    public static final String RESR = "RESR";
-    public static final String NONE = "NONE";
-    public static final String ERR = "ERR";
+    private static final String DATA = "DATA";
+    private static final String JOBN = "JOBN";
+    private static final String JOBP = "JOBP";
+    private static final String JCPL = "JCPL";
+    private static final String RESF = "RESF";
+    private static final String RESR = "RESR";
+    private static final String NONE = "NONE";
+    private static final String ERR = "ERR";
 
     public static enum ResponseType {
         DATA,
@@ -68,6 +69,7 @@ public final class DSSim {
         ParsingErr
     }
 
+    //Parse a string sent from the server as a ResponseType
     public static final ResponseType getResponseType(String command) {
         String[] split = command.split(" ");
         switch (split[0]) {

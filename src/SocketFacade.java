@@ -7,44 +7,61 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
+//Handles the socket connection and the reading/writing of client server messages
 public class SocketFacade {
     private Socket socket;
     private DataOutputStream dos;
     private BufferedReader dis;
 
     public SocketFacade(String host, int port) throws UnknownHostException, IOException {
-        socket = new Socket(host, port);
+        socket = open(host, port);
         dis = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         dos = new DataOutputStream(socket.getOutputStream());
     }
 
-    public void close() throws IOException {
-        socket.close();
+    //Open a new Socket
+    private Socket open(String host, int port) throws UnknownHostException, IOException {
+        if (socket != null) {
+            socket.close();
+        }
+        return new Socket(host, port);
     }
 
-    public void write(String s) throws IOException {
+    //Close the current socket
+    public void close() throws IOException {
+        socket.close();
+        socket = null;
+    }
+
+    //Write to the server and flush
+    private void write(String s) throws IOException {
         dos.write(s.getBytes());
         dos.flush();
     }
 
-    public String read() throws IOException {
+    //Read from the server
+    private String read() throws IOException {
         return dis.readLine();
     }
 
+    //Write to the server and return its response
     public String writeRead(String s) throws IOException {
         write(s);
         return read();
     }
 
+    //Write to the server and print its response
     public void writePrint(String s) throws IOException {
         System.out.println(writeRead(s));
     }
 
+    //Write to the server and ignore its response
     public void writeDiscard(String s) throws IOException {
         write(s);
         read();
     }
 
+    //Read an entire DATA block and return it as a String[]
     public String[] readData() throws IOException {
         String dataInfo = read();
         int dataFragmentCount = Integer.parseInt(dataInfo.split(" ")[1]);
@@ -57,6 +74,7 @@ public class SocketFacade {
         return dataFragments;
     }
 
+    //Requests all the servers and returns them as a list
     public List<Server> getServers() throws IOException {
         write(DSSim.GETSALL);
         String[] serverStrings = readData();

@@ -7,7 +7,8 @@ public class Job {
     private int disk;
 
     public Job(String[] args) {
-        this(args[0], args[1], args[2], args[3], args[4], args[5]);
+        //Discard arg[0] as will be "JOBN" when passed directly from .split 
+        this(args[1], args[2], args[3], args[4], args[5], args[6]);
     }
 
     public Job(String _submitTime, String _jobID, String _estRunTime, String _core, String _memory, String _disk) {

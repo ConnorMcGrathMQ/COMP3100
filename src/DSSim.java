@@ -1,108 +1,94 @@
-import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
+public final class DSSim {
 
-public class DSSim {
+    /*
+    Client Commands
+    */
     public static final String HELO = "HELO\n";
     public static final String OK = "OK\n";
     public static final String AUTH = AUTH("user");
-    public static String AUTH(String user) {
-        return "AUTH " + user + "\n";
+    public static final String AUTH(String user) {
+        return String.format("AUTH %s\n", user);
     }
     public static final String QUIT = "QUIT\n";
     public static final String REDY = "REDY\n";
     public static final String GETSALL = "GETS All\n";
-    public static String GETSTYPE(String serverType) {
-        return "GETS Type " + serverType;
+    public static final String GETSTYPE(Server server) {
+        return String.format("GETS Type %s\n", server.getServerType());
     }
-    public static String GETSCAPABLE(String core, String memory, String disk) {
-        return String.format("GETS Capable %s %s %s", core, memory, disk);
+    public static final String GETSCAPABLE(Job job) {
+        return String.format("GETS Capable %d %d %d\n", job.getCore(), job.getMemory(), job.getDisk());
     }
-    public static String GETSCAPABLE(int core, int memory, int disk) {
-        return String.format("GETS Capable %d %d %d", core, memory, disk);
+    public static final String GETSAVAIL(Job job) {
+        return String.format("GETS Avail %d %d %d\n", job.getCore(), job.getMemory(), job.getDisk());
     }
-    public static String GETSAVAIL(String core, String memory, String disk) {
-        return String.format("GETS Avail %s %s %s", core, memory, disk);
+    public static final String SCHD(Job job, Server server) {
+        return String.format("SCHD %d %s %d\n", job.getJobID(), server.getServerType(), server.getServerID());
     }
-    public static String GETSAVAIL(int core, int memory, int disk) {
-        return String.format("GETS Avail %d %d %d", core, memory, disk);
+    public static final String CNTJ(Server server, String jobState) {
+        return String.format("CNTJ %s %d %s\n", server.getServerType(), server.getServerID(), jobState);
     }
-    public static String SCHD(Job job, Server server) {
-        return String.format("SCHD %d %s %d", job.getJobID(), server.getServerType(), server.getServerID());
+    public static final String EJWT(Server server) {
+        return String.format("EJWT %s %d\n", server.getServerType(), server.getServerID());
     }
-    public static String CNTJ(Server server, String jobState) {
-        return String.format("CNTJ %s %d %s", server.getServerType(), server.getServerID(), jobState);
-    }
-    public static String EJWT(Server server) {
-        return String.format("EJWT %s %d", server.getServerType(), server.getServerID());
-    }
-    public static String LSTJ(Server server) {
-        return String.format("LSTJ %s %d", server.getServerType(), server.getServerID());
+    public static final String LSTJ(Server server) {
+        return String.format("LSTJ %s %d\n", server.getServerType(), server.getServerID());
     }
     public static final String PSHJ = "PSHJ\n";
-    public static String MIGJ(Job job, Server src, Server dst) {
-        return String.format("MIGJ %d %s %s %s %s", job.getJobID(), src.getServerType(), src.getServerID(), dst.getServerType(), dst.getServerID());
+    public static final String MIGJ(Job job, Server src, Server dst) {
+        return String.format("MIGJ %d %s %s %s %s\n", job.getJobID(), src.getServerType(), src.getServerID(), dst.getServerType(), dst.getServerID());
     }
-    public static String KILJ(Server server, Job job) {
-        return String.format("KILJ %s %d %d", server.getServerType(), server.getServerID(), job.getJobID());
+    public static final String KILJ(Server server, Job job) {
+        return String.format("KILJ %s %d %d\n", server.getServerType(), server.getServerID(), job.getJobID());
     }
-    public static String TERM(Server server) {
-        return String.format("TERM %s %d", server.getServerType(), server.getServerID());
+    public static final String TERM(Server server) {
+        return String.format("TERM %s %d\n", server.getServerType(), server.getServerID());
     }
 
     /*
-    End of Statics
+    Server Responses
     */
+    public static final String DATA = "DATA";
+    public static final String JOBN = "JOBN";
+    public static final String JOBP = "JOBP";
+    public static final String JCPL = "JCPL";
+    public static final String RESF = "RESF";
+    public static final String RESR = "RESR";
+    public static final String NONE = "NONE";
+    public static final String ERR = "ERR";
 
-    private DataOutputStream dos;
-    private BufferedReader dis;
-
-    public DSSim(DataOutputStream o, BufferedReader i) {
-        dos = o;
-        dis = i;
+    public static enum ResponseType {
+        DATA,
+        JOBN,
+        JOBP,
+        JCPL,
+        RESF,
+        RESR,
+        NONE,
+        ERR,
+        ParsingErr
     }
 
-    public void write(String s) throws IOException {
-        dos.write(s.getBytes());
-        dos.flush();
-    }
-
-    public String read() throws IOException {
-        return dis.readLine();
-    }
-
-    public String writeRead(String s) throws IOException {
-        write(s);
-        return read();
-    }
-
-    public void writePrint(String s) throws IOException {
-        System.out.println(writeRead(s));
-    }
-
-    public void writeDiscard(String s) throws IOException {
-        write(s);
-        read();
-    }
-
-    public String[] readData() throws IOException {
-        String dataInfo = read();
-        int dataFragmentCount = Integer.parseInt(dataInfo.split(" ")[1]);
-        write(DSSim.OK);
-        String[] dataFragments = new String[dataFragmentCount];
-        for (int i = 0; i < dataFragmentCount; i++) {
-            dataFragments[i] = read();
+    public static final ResponseType getResponseType(String command) {
+        String[] split = command.split(" ");
+        switch (split[0]) {
+            case DATA: 
+                return ResponseType.DATA;
+            case JOBN: 
+                return ResponseType.JOBN;
+            case JOBP: 
+                return ResponseType.JOBP;
+            case JCPL: 
+                return ResponseType.JCPL;
+            case RESF: 
+                return ResponseType.RESF;
+            case RESR: 
+                return ResponseType.RESR;
+            case NONE: 
+                return ResponseType.NONE;
+            case ERR: 
+                return ResponseType.ERR;
+            default:
+                return ResponseType.ParsingErr;
         }
-        return dataFragments;
-    }
-
-    public List<Server> getServers() throws IOException {
-        write(DSSim.GETSALL);
-        String[] serverStrings = readData();
-        List<Server> servers = new ArrayList<Server>();
-        for (int i = 0; i < serverStrings.length; i++) {
-            servers.add(new Server(serverStrings[i].split(" ")));
-        }
-        return servers;
     }
 }

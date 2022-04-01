@@ -19,7 +19,7 @@ public class ServerCycler implements Iterator<Server>{
     @Override
     public Server next() {
         //Loop back to start
-        if (current > servers.size()) {
+        if (current >= servers.size()) {
             current = 0;
         }
         return servers.get(current++);

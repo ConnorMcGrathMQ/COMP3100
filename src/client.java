@@ -7,17 +7,18 @@ import java.util.List;
 public class client {
     private static final String HOST = "127.0.0.1";
     private static final int PORT = 50000;
-    private static final String USER = "username";
-    private SocketFacade sim;
-    public void main(String[] args) throws IOException {
+    private static final String USER = System.getProperty("user.name");
+    private static SocketFacade sim;
+    
+    public static void main(String[] args) throws IOException {
         try {
             //Create new handler for the connection
             sim = new SocketFacade(HOST, PORT);
 
             //Send default start sequence
-            sim.writePrint(DSSim.HELO);
-            sim.writePrint(DSSim.AUTH(USER));
-            sim.writePrint(DSSim.REDY);
+            sim.writeDiscard(DSSim.HELO);
+            sim.writeDiscard(DSSim.AUTH(USER));
+            Job firstJob = new Job(sim.writeRead(DSSim.REDY).split(" "));
 
             //Get all servers and sort by cores
             List<Server> servers = sim.getServers();
@@ -25,10 +26,13 @@ public class client {
 
             //Filter out all servers with less the the most cores
             Server best = servers.get(0);
-            servers.removeIf(s -> (s.compareTo(best) < 0));
+            servers.removeIf(s -> !(s.getServerType().equals(best.getServerType())));
 
             //Create cyclic iterator of filtered server list
             Iterator<Server> serverCycler = new ServerCycler(servers);
+
+            //Schedule First Job
+            sim.writeDiscard(DSSim.SCHD(firstJob, serverCycler.next()));
 
             //Collect jobs until NONE response and assign to servers cyclicly
             String output;

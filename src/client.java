@@ -33,11 +33,16 @@ public class client {
             //Collect jobs until NONE response and assign to servers cyclicly
             String output;
             while(DSSim.getResponseType(output = sim.writeRead(DSSim.REDY)) != DSSim.ResponseType.NONE) {
-                if (DSSim.getResponseType(output) == DSSim.ResponseType.JOBN) {
-                    Job toSchedule = new Job(output.split(" "));
-                    sim.writeDiscard(DSSim.SCHD(toSchedule, serverCycler.next()));
+                switch (DSSim.getResponseType(output)) {
+                    case JOBN:
+                        Job toSchedule = new Job(output.split(" "));
+                        sim.writeDiscard(DSSim.SCHD(toSchedule, serverCycler.next()));
+                        break;
+                    default:
+                        break;
                 }
             }
+            sim.writeDiscard(DSSim.QUIT);
         } catch (UnknownHostException e) {
             System.err.println("Unknown Host Exception: " + HOST);
             System.exit(1);

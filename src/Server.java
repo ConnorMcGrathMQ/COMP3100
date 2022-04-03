@@ -7,8 +7,6 @@ public class Server implements Comparable<Server>{
     private int memory;
     private int disk;
 
-    String serverName;
-
     /*
     Constructors
     */
@@ -26,8 +24,6 @@ public class Server implements Comparable<Server>{
         core = _core;
         memory = _memory;
         disk = _disk;
-
-        serverName = String.format("%s %d", serverType, serverID);
     }
 
     public String getServerType() {

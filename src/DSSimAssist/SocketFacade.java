@@ -1,3 +1,5 @@
+package DSSimAssist;
+
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -7,14 +9,20 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
+import DSSimObjects.Server;
+
 //Handles the socket connection and the reading/writing of client server messages
 public class SocketFacade {
+    public final String host;
+    public final int port;
     private Socket socket;
     private DataOutputStream dos;
     private BufferedReader dis;
 
     public SocketFacade(String host, int port) throws UnknownHostException, IOException {
         socket = open(host, port);
+        this.host = host;
+        this.port = port;
         dis = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         dos = new DataOutputStream(socket.getOutputStream());
     }
@@ -34,7 +42,7 @@ public class SocketFacade {
     }
 
     //Write to the server and flush
-    private void write(String s) throws IOException {
+    public void write(String s) throws IOException {
         dos.write(s.getBytes());
         dos.flush();
     }

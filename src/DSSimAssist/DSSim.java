@@ -1,3 +1,8 @@
+package DSSimAssist;
+
+import DSSimObjects.Job;
+import DSSimObjects.Server;
+
 public final class DSSim {
 
     /*

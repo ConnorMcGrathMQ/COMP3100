@@ -1,4 +1,8 @@
+package DSSimAssist;
+
 import java.util.Comparator;
+
+import DSSimObjects.Server;
 
 public class ServerComparator implements Comparator<Server>{
 

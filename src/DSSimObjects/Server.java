@@ -1,3 +1,4 @@
+package DSSimObjects;
 public class Server implements Comparable<Server>{
     private String serverType;
     private int serverID;

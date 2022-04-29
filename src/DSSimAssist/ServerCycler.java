@@ -1,5 +1,9 @@
+package DSSimAssist;
+
 import java.util.Iterator;
 import java.util.List;
+
+import DSSimObjects.Server;
 
 public class ServerCycler implements Iterator<Server>{
     List<Server> servers;

@@ -1,5 +1,6 @@
 import java.io.IOException;
 
+import Algorithms.*;
 import DSSimAssist.*;
 
 public class client {
@@ -9,7 +10,24 @@ public class client {
     
     public static void main(String[] args) throws IOException {
         sim = new SocketFacade(HOST, PORT);
-        //Algorithms.LRR.run(sim);
-        Algorithms.FC.run(sim);
+        if (args.length > 0) {
+            switch (args[0]) {
+                case "LRR":
+                    LRR.run(sim);
+                    break;
+                case "FC":
+                    FC.run(sim);
+                    break;
+                case "FF":
+                    FF.run(sim);
+                    break;
+                case "-BF":
+                    BF.run(sim);
+                    break;
+                case "WF":
+                    WF.run(sim);
+                    break;
+            }
+        }
     }
 }

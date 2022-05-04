@@ -1,0 +1,1 @@
+javac -d compiled src/client.java src/Algorithms/*.java src/DSSimAssist/*.java src/DSSimObjects/*.java

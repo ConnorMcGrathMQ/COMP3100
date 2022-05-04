@@ -9,7 +9,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
-import DSSimObjects.Server;
+import DSSimObjects.*;
 
 //Handles the socket connection and the reading/writing of client server messages
 public class SocketFacade {
@@ -82,9 +82,36 @@ public class SocketFacade {
         return dataFragments;
     }
 
+    public String[] writeReadData(String s) throws IOException {
+        write(s);
+        return readData();
+    }
+
     //Requests all the servers and returns them as a list
     public List<Server> getServers() throws IOException {
         write(DSSim.GETSALL);
+        String[] serverStrings = readData();
+        List<Server> servers = new ArrayList<Server>();
+        for (int i = 0; i < serverStrings.length; i++) {
+            servers.add(new Server(serverStrings[i].split(" ")));
+        }
+        return servers;
+    }
+
+    //Requests all capable servers and returns them as a list
+    public List<Server> getCapableServers(Job j) throws IOException {
+        write(DSSim.GETSCAPABLE(j));
+        String[] serverStrings = readData();
+        List<Server> servers = new ArrayList<Server>();
+        for (int i = 0; i < serverStrings.length; i++) {
+            servers.add(new Server(serverStrings[i].split(" ")));
+        }
+        return servers;
+    }
+
+    //Requests all available servers and returns them as a list
+    public List<Server> getAvailableServers(Job j) throws IOException {
+        write(DSSim.GETSAVAIL(j));
         String[] serverStrings = readData();
         List<Server> servers = new ArrayList<Server>();
         for (int i = 0; i < serverStrings.length; i++) {

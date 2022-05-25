@@ -75,9 +75,7 @@ public class Connection {
     //Read from the server
     private String read() {
         try {
-            String line = dis.readLine();
-            return line;
-            //return dis.readLine();
+            return dis.readLine();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -215,50 +213,54 @@ public class Connection {
         switch (Response.type(r)) {
             case DATA:
                 ResponseDATA rDATA = (ResponseDATA) r;
-                OK(false, false);
-                if (rDATA.getnRecs() > 0) {
-                    switch (currCommand) {
-                        case GETS:
-                            returnedDATAServers = new ArrayList<>();
-                            for (int i = 0; i < rDATA.getnRecs(); i++) {
-                                String[] params = read().split(" ");
-                                returnedDATAServers.add(
-                                        new Server(
-                                                params[0],                      //Server Type
-                                                Integer.parseInt(params[1]),    //Server ID
-                                                Server.parseState(params[2]),   //Server State
-                                                Integer.parseInt(params[3]),    //Cur Start Time
-                                                Integer.parseInt(params[4]),    //Core
-                                                Integer.parseInt(params[5]),    //Memory
-                                                Integer.parseInt(params[6])     //Disk
-                                        )
-                                );
-                            }
+                switch (currCommand) {
+                    case GETS:
+                        returnedDATAServers = new ArrayList<>();
+                        if (rDATA.getnRecs() == 0) {
                             break;
-                        case LSTJ:
-                            returnedDATAJobs = new ArrayList<>();
-                            for (int i = 0; i < rDATA.getnRecs(); i++) {
-                                String[] params = read().split(" ");
-                                returnedDATAJobs.add(
-                                        new Job(
-                                                Integer.parseInt(params[0]),    //Job ID
-                                                Job.parseState(params[1]),      //Job State
-                                                Integer.parseInt(params[2]),    //Submit Time
-                                                Integer.parseInt(params[3]),    //Start Time
-                                                Integer.parseInt(params[4]),    //Est Run Time
-                                                Integer.parseInt(params[5]),    //Core
-                                                Integer.parseInt(params[6]),    //Memory
-                                                Integer.parseInt(params[7])     //Disk
-                                        )
-                                );
-                            }
+                        }
+                        OK(false, false);
+                        for (int i = 0; i < rDATA.getnRecs(); i++) {
+                            String[] params = read().split(" ");
+                            returnedDATAServers.add(
+                                    new Server(
+                                            params[0],                      //Server Type
+                                            Integer.parseInt(params[1]),    //Server ID
+                                            Server.parseState(params[2]),   //Server State
+                                            Integer.parseInt(params[3]),    //Cur Start Time
+                                            Integer.parseInt(params[4]),    //Core
+                                            Integer.parseInt(params[5]),    //Memory
+                                            Integer.parseInt(params[6])     //Disk
+                                    )
+                            );
+                        }
+                        break;
+                    case LSTJ:
+                        returnedDATAJobs = new ArrayList<>();
+                        if (rDATA.getnRecs() == 0) {
                             break;
-                        default:
-                            System.out.println("Unexpectedly received DATA in response to " + currCommand.toString() + ". Exiting");
-                            System.exit(1);
-                    }
-                    OK();
+                        }
+                        for (int i = 0; i < rDATA.getnRecs(); i++) {
+                            String[] params = read().split(" ");
+                            returnedDATAJobs.add(
+                                    new Job(
+                                            Integer.parseInt(params[0]),    //Job ID
+                                            Job.parseState(params[1]),      //Job State
+                                            Integer.parseInt(params[2]),    //Submit Time
+                                            Integer.parseInt(params[3]),    //Start Time
+                                            Integer.parseInt(params[4]),    //Est Run Time
+                                            Integer.parseInt(params[5]),    //Core
+                                            Integer.parseInt(params[6]),    //Memory
+                                            Integer.parseInt(params[7])     //Disk
+                                    )
+                            );
+                        }
+                        break;
+                    default:
+                        System.out.println("Unexpectedly received DATA in response to " + currCommand.toString() + ". Exiting");
+                        System.exit(1);
                 }
+                OK();
                 break;
             case JOBN:
                 ResponseJOBN rJOBN = (ResponseJOBN) r;
@@ -383,6 +385,7 @@ public class Connection {
     public List<Job> getJobs(Server server) {
         return LSTJ(server);
     }
+
     //PSHJ
     public void pushJob() {
         PSHJ();

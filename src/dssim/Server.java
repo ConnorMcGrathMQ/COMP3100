@@ -1,13 +1,16 @@
 package dssim;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Server implements Comparable<Server>{
     private String serverType;
     private int serverID;
     private ServerState state;
     private int curStartTime;
-    private int core;
-    private int memory;
-    private int disk;
+    private int core, baseCore, memory, baseMemory, disk, baseDisk;
+
+    private List<Job> assignedJobs= new ArrayList<>();
 
     public enum ServerState {
         INACTIVE(0, "inactive"),
@@ -37,6 +40,16 @@ public class Server implements Comparable<Server>{
         serverID = _serverID;
         state = _state;
         curStartTime = _curStartTime;
+        baseCore = _core;
+        baseMemory = _memory;
+        baseDisk = _disk;
+        core = _core;
+        memory = _memory;
+        disk = _disk;
+    }
+
+    public void update(ServerState _state, int _curStartTime, int _core, int _memory, int _disk) {
+        state = _state;
         core = _core;
         memory = _memory;
         disk = _disk;
@@ -65,20 +78,58 @@ public class Server implements Comparable<Server>{
     public int getServerID() {
         return serverID;
     }
-    public String getState() {
-        return state.value();
+    public ServerState getState() {
+        return state;
     }
     public int getCurStartTime() {
         return curStartTime;
     }
     public int getCore() {
-        return core;
+        return getCore(false);
+    }
+    public int getCore(boolean getBaseValue) {
+        return getBaseValue ? baseCore : core;
     }
     public int getMemory() {
-        return memory;
+        return getMemory(false);
+    }
+    public int getMemory(boolean getBaseValue) {
+        return getBaseValue ? baseMemory : memory;
     }
     public int getDisk() {
-        return disk;
+        return getDisk(false);
+    }
+    public int getDisk(boolean getBaseValue) {
+        return getBaseValue ? baseDisk : disk;
+    }
+
+    public void assignJob(Job j) {
+        assignedJobs.add(j);
+    }
+
+    public boolean removeJob(Job j) {
+        return assignedJobs.remove(j);
+    }
+
+    public int sumAssignedJobEstTime() {
+        int total = 0;
+        for (Job j : assignedJobs) {
+            total += j.getEstRunTime();
+        }
+        return total;
+    }
+
+    public void jobComplete(int jobID) {
+        for (Job j : assignedJobs) {
+            if (j.getJobID() == jobID) {
+                removeJob(j);
+                break;
+            }
+        }
+    }
+
+    public List<Job> getJobs() {
+        return assignedJobs;
     }
 
     @Override

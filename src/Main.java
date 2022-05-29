@@ -32,6 +32,9 @@ public class Main {
             case "DF":
                 DF.run(sim);
                 break;
+            case "DF2":
+                DF2.run(sim);
+                break;
             case "":
                 System.err.println(String.format("No Algorithm Selected", algorithmArg));
                 System.exit(1);

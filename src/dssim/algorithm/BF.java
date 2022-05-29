@@ -17,7 +17,7 @@ public class BF implements DSSimAlgorithm<BF> {
             if (servers.size() == 0) {
                 servers = sim.getServersCapable(sim.getJob());
             }
-            Collections.sort(servers, new ServerComparator(sim, ComparisonMetric.MOSTCORE));
+            Collections.sort(servers, new ServerComparator(sim, ComparisonMetric.HIGHCORECOUNT));
             sim.schedule(servers.get(0));
         }
         sim.quit();

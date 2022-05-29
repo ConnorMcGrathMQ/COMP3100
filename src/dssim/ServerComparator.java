@@ -4,26 +4,26 @@ import java.util.Comparator;
 
 public class ServerComparator implements Comparator<Server> {
     Connection sim;
+    int[] parameters;
     ComparisonMetric[] metrics;
 
     public enum ComparisonMetric {
-        MOSTCORE,
-        LEASTCORE,
-        MOSTMEMORY,
-        LEASTMEMORY,
-        MOSTDISK,
-        LEASTDISK,
-        MOSTWAITINGJOBS,
-        LEASTWAITINGJOBS,
-        MOSTRUNNINGJOBS,
-        LEASTRUNNINGJOBS,
-        MOSTTOTALJOBS,
-        LEASTTOTALJOBS,
-        MOSTESTJOBTIME,
-        LEASTESTJOBTIME
+        HIGHCORECOUNT,
+        LOWCORECOUNT,
+        HIGHSPARECORECOUNT,
+        LOWSPARECORECOUNT,
+        LOWJOBCOUNT,
+        LOWJOBTIME,
+        BESTCOREUSAGE,
+        SERVERSTATUS
     }
     public ServerComparator(Connection sim, ComparisonMetric... metrics) {
+        this(sim, null, metrics);
+    }
+
+    public ServerComparator(Connection sim, int[] parameters, ComparisonMetric... metrics) {
         this.sim = sim;
+        this.parameters = parameters;
         this.metrics = metrics;
     }
 
@@ -33,47 +33,29 @@ public class ServerComparator implements Comparator<Server> {
         int value = 0;
         while (metricNum < metrics.length && value == 0) {
             switch (metrics[metricNum]) {
-                case MOSTCORE:
-                    value = compareCore(serverA, serverB);
+                case HIGHCORECOUNT:
+                    value = -compareCore(serverA, serverB, true, -parameters[metricNum]);
                     break;
-                case LEASTCORE:
-                    value = -compareCore(serverA, serverB);
+                case LOWCORECOUNT:
+                    value = compareCore(serverA, serverB, true, parameters[metricNum]);
                     break;
-                case MOSTMEMORY:
-                    value = compareMemory(serverA, serverB);
+                case HIGHSPARECORECOUNT:
+                    value = compareCore(serverA, serverB, false, -parameters[metricNum]);
                     break;
-                case LEASTMEMORY:
-                    value = -compareMemory(serverA, serverB);
+                case LOWSPARECORECOUNT:
+                    value = compareCore(serverA, serverB, false, parameters[metricNum]);
                     break;
-                case MOSTDISK:
-                    value = compareDisk(serverA, serverB);
-                    break;
-                case LEASTDISK:
-                    value = -compareDisk(serverA, serverB);
-                    break;
-                case MOSTWAITINGJOBS:
-                    value = compareWaitingJobs(serverA, serverB);
-                    break;
-                case LEASTWAITINGJOBS:
-                    value = -compareWaitingJobs(serverA, serverB);
-                    break;
-                case MOSTRUNNINGJOBS:
-                    value = compareRunningJobs(serverA, serverB);
-                    break;
-                case LEASTRUNNINGJOBS:
-                    value = -compareRunningJobs(serverA, serverB);
-                    break;
-                case MOSTTOTALJOBS:
+                case LOWJOBCOUNT:
                     value = compareTotalJobs(serverA, serverB);
                     break;
-                case LEASTTOTALJOBS:
-                    value = -compareTotalJobs(serverA, serverB);
+                case LOWJOBTIME:
+                    value = compareEstJobTime(serverA, serverB, parameters[metricNum]);
                     break;
-                case MOSTESTJOBTIME:
-                    value = compareEstJobTime(serverA, serverB);
+                case BESTCOREUSAGE:
+                    value = compareCoreUsage(serverA, serverB, parameters[metricNum]);
                     break;
-                case LEASTESTJOBTIME:
-                    value = -compareEstJobTime(serverA, serverB);
+                case SERVERSTATUS:
+                    value = compareStatus(serverA, serverB, parameters[metricNum]);
                     break;
             }
             metricNum++;
@@ -81,32 +63,35 @@ public class ServerComparator implements Comparator<Server> {
         return value;
     }
 
-    private int compareCore(Server serverA, Server serverB) {
-        return Integer.compare(serverA.getCore(), serverB.getCore());
-    }
-
-    private int compareMemory(Server serverA, Server serverB) {
-        return Integer.compare(serverA.getMemory(), serverB.getMemory());
-    }
-
-    private int compareDisk(Server serverA, Server serverB) {
-        return Integer.compare(serverA.getDisk(), serverB.getDisk());
-    }
-
-    private int compareWaitingJobs(Server serverA, Server serverB) {
-        return Integer.compare(sim.countJobs(serverA, Job.JobState.WAITING), sim.countJobs(serverB, Job.JobState.WAITING));
-    }
-
-    private int compareRunningJobs(Server serverA, Server serverB) {
-        return Integer.compare(sim.countJobs(serverA, Job.JobState.RUNNING), sim.countJobs(serverB, Job.JobState.RUNNING));
+    private int compareCore(Server serverA, Server serverB, boolean compareBaseValue, int insignificanceThreshold) {
+        if (insignificanceThreshold > 0) {
+            return Integer.compare(Math.min(serverA.getCore(compareBaseValue), insignificanceThreshold), Math.min(serverB.getCore(compareBaseValue), insignificanceThreshold));
+        } else {
+            return Integer.compare(Math.max(serverA.getCore(compareBaseValue), -insignificanceThreshold), Math.max(serverB.getCore(compareBaseValue), -insignificanceThreshold));
+        }
     }
 
     private int compareTotalJobs(Server serverA, Server serverB) {
-        return Integer.compare(sim.countJobs(serverA), sim.countJobs(serverB));
+        return Integer.compare(serverA.getJobs().size(), serverB.getJobs().size());
     }
 
-    private int compareEstJobTime(Server serverA, Server serverB) {
-        return Integer.compare(sim.estimateWaitingTime(serverA), sim.estimateWaitingTime(serverB));
+    private int compareEstJobTime(Server serverA, Server serverB, int insignificanceThreshold) {
+        return Integer.compare(Math.min(serverA.sumAssignedJobEstTime(), insignificanceThreshold), Math.min(serverB.sumAssignedJobEstTime(), insignificanceThreshold));
     }
+
+    private int compareCoreUsage(Server serverA, Server serverB, int insignificanceThreshold) {
+        float spareCoreA = (serverA.getCore() - sim.getJob().getCore());
+        float spareCoreB = (serverB.getCore() - sim.getJob().getCore());
+        spareCoreA /= (float) serverA.getCore(true);
+        spareCoreB /= (float) serverB.getCore(true);
+        spareCoreA *= spareCoreA < 0 ? 0 : 100;
+        spareCoreB *= spareCoreB < 0 ? 0 : 100;
+        return Integer.compare(Math.max((int)spareCoreA, insignificanceThreshold), Math.max((int)spareCoreB, insignificanceThreshold));
+    }
+
+    private int compareStatus(Server serverA, Server serverB, int serverStatus) {
+        return Integer.compare((1 << serverA.getState().id() & serverStatus) != 0 ? 1 : 0, (1 << serverB.getState().id() & serverStatus) != 0? 1 : 0);
+    }
+
 
 }

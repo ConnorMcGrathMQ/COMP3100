@@ -48,6 +48,8 @@ public class Connection {
         TERM
     }
 
+    private List<Server> servers = new ArrayList<>();
+
     public Connection(String host, int port) {
         try {
             socket = new Socket(host, port);
@@ -67,6 +69,7 @@ public class Connection {
         try {
             dos.write(s.getBytes());
             dos.flush();
+//            System.out.print("-" + s + "-");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -75,7 +78,9 @@ public class Connection {
     //Read from the server
     private String read() {
         try {
-            return dis.readLine();
+            String line = dis.readLine();
+//            System.out.print("|" + line + "|");
+            return line;
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -124,7 +129,7 @@ public class Connection {
     }
 
     private List<Server> GETSALL() {
-        write("GETS ALL\n");
+        write("GETS All\n");
         currCommand = CommandType.GETS;
         interpretResponse();
         return returnedDATAServers;
@@ -222,8 +227,24 @@ public class Connection {
                         OK(false, false);
                         for (int i = 0; i < rDATA.getnRecs(); i++) {
                             String[] params = read().split(" ");
-                            returnedDATAServers.add(
-                                    new Server(
+                            Server serverExists = null;
+                            for (Server server : servers) {
+                                if (server.getServerType().equals(params[0]) && server.getServerID() == Integer.parseInt(params[1])) {
+                                    serverExists = server;
+                                    break;
+                                }
+                            }
+                            if (serverExists != null) {
+                                returnedDATAServers.add(serverExists);
+                                serverExists.update(
+                                        Server.parseState(params[2]),
+                                        Integer.parseInt(params[3]),
+                                        Integer.parseInt(params[4]),
+                                        Integer.parseInt(params[5]),
+                                        Integer.parseInt(params[6])
+                                );
+                            } else {
+                                    Server newServer = new Server(
                                             params[0],                      //Server Type
                                             Integer.parseInt(params[1]),    //Server ID
                                             Server.parseState(params[2]),   //Server State
@@ -231,8 +252,10 @@ public class Connection {
                                             Integer.parseInt(params[4]),    //Core
                                             Integer.parseInt(params[5]),    //Memory
                                             Integer.parseInt(params[6])     //Disk
-                                    )
-                            );
+                                    );
+                                    servers.add(newServer);
+                                    returnedDATAServers.add(newServer);
+                            }
                         }
                         break;
                     case LSTJ:
@@ -272,7 +295,7 @@ public class Connection {
                 break;
             case JCPL:
                 ResponseJCPL rJCPL = (ResponseJCPL) r;
-                //TODO Possible moving of Jobs of overburdened servers
+                annouceCompletion(rJCPL.getJobID());
                 break;
             case RESF:
                 ResponseRESF rRESF = (ResponseRESF) r;
@@ -290,7 +313,7 @@ public class Connection {
                 break;
             case ERR:
                 ResponseERR rERR = (ResponseERR) r;
-                System.out.println("DS-Server encountered an error:\n[" + rERR.getErrorMessage() + "]");
+                System.out.println("DS-Server encountered an error:\n" + rERR.getErrorMessage() + "\nPrevious Command was: " + currCommand.toString());
                 System.exit(1);
                 break;
             case DOT:
@@ -300,6 +323,12 @@ public class Connection {
                 System.out.println("Failed to interpret server response. Exiting");
                 System.exit(1);
                 break;
+        }
+    }
+
+    public void annouceCompletion(int jobID) {
+        for (Server s : servers) {
+            s.jobComplete(jobID);
         }
     }
 
@@ -313,6 +342,7 @@ public class Connection {
             HELO();
             AUTH(System.getProperty("user.name"));
             REDY();
+            GETSALL();
             state = ConnectionState.READY;
         }
     }
@@ -359,6 +389,7 @@ public class Connection {
 
     //SCHD
     public void schedule(Server server) {
+        server.assignJob(getJob());
         SCHD(getJob(), server);
     }
 

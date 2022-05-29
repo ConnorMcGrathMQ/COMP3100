@@ -3,7 +3,7 @@ package dssim;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Server implements Comparable<Server>{
+public class Server {
     private final String serverType;
     private final int serverID;
     private ServerState state;
@@ -138,11 +138,6 @@ public class Server implements Comparable<Server>{
 
     public List<Job> getJobs() {
         return assignedJobs;
-    }
-
-    @Override
-    public int compareTo(Server o) {
-        return Integer.compare(this.getCore(), o.getCore());
     }
 }
 

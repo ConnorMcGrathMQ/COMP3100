@@ -3,6 +3,8 @@ package dssim;
 import dssim.response.*;
 
 public abstract class Response {
+
+    //Method for generating a response object from a string input for use by Connection.interpretResponse()
     public static Response createResponse(String input) {
         String[] p = input.split(" ");
         switch (p[0]) {

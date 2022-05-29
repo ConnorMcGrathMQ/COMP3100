@@ -4,13 +4,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Server implements Comparable<Server>{
-    private String serverType;
-    private int serverID;
+    private final String serverType;
+    private final int serverID;
     private ServerState state;
     private int curStartTime;
-    private int core, baseCore, memory, baseMemory, disk, baseDisk;
+    private final int baseCurStartTime;
+    private int core;
+    private final int baseCore;
+    private int memory;
+    private final int baseMemory;
+    private int disk;
+    private final int baseDisk;
 
-    private List<Job> assignedJobs= new ArrayList<>();
+    private List<Job> assignedJobs = new ArrayList<>();
 
     public enum ServerState {
         INACTIVE(0, "inactive"),
@@ -21,7 +27,7 @@ public class Server implements Comparable<Server>{
 
         private int id;
         private String value;
-        private ServerState(int id, String value) {
+        ServerState(int id, String value) {
             this.id = id;
             this.value = value;
         }
@@ -40,6 +46,7 @@ public class Server implements Comparable<Server>{
         serverID = _serverID;
         state = _state;
         curStartTime = _curStartTime;
+        baseCurStartTime = _curStartTime;
         baseCore = _core;
         baseMemory = _memory;
         baseDisk = _disk;
@@ -50,6 +57,7 @@ public class Server implements Comparable<Server>{
 
     public void update(ServerState _state, int _curStartTime, int _core, int _memory, int _disk) {
         state = _state;
+        curStartTime = _curStartTime;
         core = _core;
         memory = _memory;
         disk = _disk;

@@ -2,14 +2,12 @@ package dssim.algorithm;
 
 import dssim.Connection;
 import dssim.Server;
-import dssim.ServerComparator;
 
-import java.util.Collections;
 import java.util.List;
 
 
 public class FC implements DSSimAlgorithm<FC> {
-    public static void run(Connection sim) {
+    public static void run(Connection sim) { //An implementation of First Capable for testing purposes
         List<Server> servers;
         while (sim.getJob() != null) {
             servers = sim.getServersCapable(sim.getJob());

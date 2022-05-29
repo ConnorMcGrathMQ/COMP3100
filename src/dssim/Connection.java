@@ -89,6 +89,8 @@ public class Connection {
 
     //
     // Raw DS-Sim Commands
+    // Those that return a command in response are delegated to interpretResponse()
+    // Others, such as CNTJ, EJWT or TERM will parse the integer themselves
     //
 
     private void HELO() {
@@ -216,17 +218,19 @@ public class Connection {
         String s = read();
         Response r = Response.createResponse(s);
         switch (Response.type(r)) {
-            case DATA:
-                ResponseDATA rDATA = (ResponseDATA) r;
-                switch (currCommand) {
+            case DATA: //Start reading a data block
+                ResponseDATA rDATA = (ResponseDATA) r; //Cast type
+                switch (currCommand) { //Switch based on expected content type
                     case GETS:
                         returnedDATAServers = new ArrayList<>();
-                        if (rDATA.getnRecs() == 0) {
+                        if (rDATA.getnRecs() == 0) { //If empty data set, skip straight to the final OK
                             break;
                         }
-                        OK(false, false);
+                        OK(false, false); //Special OK that doesnt trigger the interpret again
                         for (int i = 0; i < rDATA.getnRecs(); i++) {
-                            String[] params = read().split(" ");
+                            String[] params = read().split(" "); //Read one DATA rec
+
+                            //Search for an exisiting server by that identifier
                             Server serverExists = null;
                             for (Server server : servers) {
                                 if (server.getServerType().equals(params[0]) && server.getServerID() == Integer.parseInt(params[1])) {
@@ -234,6 +238,7 @@ public class Connection {
                                     break;
                                 }
                             }
+                            //If it exists, return it instead and update its information
                             if (serverExists != null) {
                                 returnedDATAServers.add(serverExists);
                                 serverExists.update(
@@ -243,6 +248,7 @@ public class Connection {
                                         Integer.parseInt(params[5]),
                                         Integer.parseInt(params[6])
                                 );
+                            //If it does not exist, create it
                             } else {
                                     Server newServer = new Server(
                                             params[0],                      //Server Type
@@ -285,48 +291,46 @@ public class Connection {
                 }
                 OK();
                 break;
-            case JOBN:
+            case JOBN: //New Job
                 ResponseJOBN rJOBN = (ResponseJOBN) r;
                 currentJob = new Job(rJOBN);
                 break;
-            case JOBP:
+            case JOBP: //Job to allocate
                 ResponseJOBP rJOBP = (ResponseJOBP) r;
                 currentJob = new Job(rJOBP);
                 break;
-            case JCPL:
+            case JCPL: //Job completion
                 ResponseJCPL rJCPL = (ResponseJCPL) r;
-                annouceCompletion(rJCPL.getJobID());
+                annouceCompletion(rJCPL.getJobID()); //Notify servers
                 break;
-            case RESF:
+            case RESF: //Server Failure
                 ResponseRESF rRESF = (ResponseRESF) r;
-                //TODO Set server to Unavailable
+                //TODO Modifications that require server failure information
                 break;
-            case RESR:
+            case RESR: //Server recovery
                 ResponseRESR rRESR = (ResponseRESR) r;
-                //TODO Set server to Inactive
+                //TODO Modifications that require server failure information
                 break;
-            case NONE:
+            case NONE: //All jobs have finished
                 returnedNONE = true;
                 break;
-            case OK:
-
+            case OK: //Do nothing
                 break;
-            case ERR:
+            case ERR: //DS-Server Error
                 ResponseERR rERR = (ResponseERR) r;
                 System.out.println("DS-Server encountered an error:\n" + rERR.getErrorMessage() + "\nPrevious Command was: " + currCommand.toString());
                 System.exit(1);
                 break;
-            case DOT:
-
+            case DOT: //Do nothing ('.' returned from after DATA)
                 break;
-            default:
+            default: //Parsing error
                 System.out.println("Failed to interpret server response. Exiting");
                 System.exit(1);
                 break;
         }
     }
 
-    public void annouceCompletion(int jobID) {
+    public void annouceCompletion(int jobID) { //notify servers of job completion
         for (Server s : servers) {
             s.jobComplete(jobID);
         }
@@ -334,10 +338,11 @@ public class Connection {
 
     //
     // Public DS-Sim Operations for Algorithms
+    // Most methods are self explanatory and include a comment of the DS Sim command they implement
     //
 
-    //HELO, AUTH, REDY
-    public void initialise() {
+    //HELO, AUTH, REDY, GETSALL
+    public void initialise() { //Send start up commands and collect all servers
         if (state == ConnectionState.STARTING) {
             HELO();
             AUTH(System.getProperty("user.name"));
@@ -360,7 +365,7 @@ public class Connection {
     }
 
     //REDY
-    public Job getJob() {
+    public Job getJob() { //Attempt to optimise the job collection by storing the most recent job and allowing other objects to repeatedly call getJob() without asking the server constantly
         while (currentJob == null && !returnedNONE) {
             REDY();
         }

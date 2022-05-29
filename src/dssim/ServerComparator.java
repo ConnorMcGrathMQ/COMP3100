@@ -7,7 +7,7 @@ public class ServerComparator implements Comparator<Server> {
     int[] parameters;
     ComparisonMetric[] metrics;
 
-    public enum ComparisonMetric {
+    public enum ComparisonMetric { //Available Metrics for server comparison
         HIGHCORECOUNT,
         LOWCORECOUNT,
         HIGHSPARECORECOUNT,
@@ -16,9 +16,6 @@ public class ServerComparator implements Comparator<Server> {
         LOWJOBTIME,
         BESTCOREUSAGE,
         SERVERSTATUS
-    }
-    public ServerComparator(Connection sim, ComparisonMetric... metrics) {
-        this(sim, null, metrics);
     }
 
     public ServerComparator(Connection sim, int[] parameters, ComparisonMetric... metrics) {
@@ -31,7 +28,7 @@ public class ServerComparator implements Comparator<Server> {
     public int compare(Server serverA, Server serverB) {
         int metricNum = 0;
         int value = 0;
-        while (metricNum < metrics.length && value == 0) {
+        while (metricNum < metrics.length && value == 0) { //Progressively compare metrics until one returns a non 0 response
             switch (metrics[metricNum]) {
                 case HIGHCORECOUNT:
                     value = -compareCore(serverA, serverB, true, -parameters[metricNum]);
@@ -46,7 +43,7 @@ public class ServerComparator implements Comparator<Server> {
                     value = compareCore(serverA, serverB, false, parameters[metricNum]);
                     break;
                 case LOWJOBCOUNT:
-                    value = compareTotalJobs(serverA, serverB);
+                    value = compareTotalJobs(serverA, serverB, parameters[metricNum]);
                     break;
                 case LOWJOBTIME:
                     value = compareEstJobTime(serverA, serverB, parameters[metricNum]);
@@ -71,8 +68,8 @@ public class ServerComparator implements Comparator<Server> {
         }
     }
 
-    private int compareTotalJobs(Server serverA, Server serverB) {
-        return Integer.compare(serverA.getJobs().size(), serverB.getJobs().size());
+    private int compareTotalJobs(Server serverA, Server serverB, int insignificanceThreshold) {
+        return Integer.compare(Math.min(serverA.getJobs().size(), insignificanceThreshold), Math.min(serverB.getJobs().size(), insignificanceThreshold));
     }
 
     private int compareEstJobTime(Server serverA, Server serverB, int insignificanceThreshold) {
@@ -89,7 +86,7 @@ public class ServerComparator implements Comparator<Server> {
         return Integer.compare(Math.max((int)spareCoreA, insignificanceThreshold), Math.max((int)spareCoreB, insignificanceThreshold));
     }
 
-    private int compareStatus(Server serverA, Server serverB, int serverStatus) {
+    private int compareStatus(Server serverA, Server serverB, int serverStatus) { //server status is a mask of ServerState IDs
         return Integer.compare((1 << serverA.getState().id() & serverStatus) != 0 ? 1 : 0, (1 << serverB.getState().id() & serverStatus) != 0? 1 : 0);
     }
 
